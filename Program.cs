@@ -13,6 +13,8 @@ public class Program
 
         builder.Services.AddDbContext<apbd_cw11.Database.ClinicDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("mssql.pjwstk.edu.pl")));
 
+        builder.Services.AddScoped<DBService>();
+
         builder.Services.AddControllers();
 
         builder.Services.AddSwaggerGen();

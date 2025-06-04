@@ -9,19 +9,16 @@ namespace apbd_cw11.Controllers;
 [Route("[controller]")]
 public class MedicamentController : ControllerBase
 {
-    protected readonly ClinicDbContext database;
+    protected readonly DBService service;
 
-    public MedicamentController(ClinicDbContext database)
-    {
-        this.database = database;
-    }
+    public MedicamentController(DBService service) { this.service = service; }
 
     [HttpGet]
     public async Task<IActionResult> GetAllMedicaments()
     {
         try
         {
-            var querry = this.database.Medicaments;
+            var querry = this.service.GetAllMedicaments();
 
             if (await querry.AnyAsync()) return this.Ok(await querry.ToListAsync());
             else return this.NoContent();
@@ -30,22 +27,11 @@ public class MedicamentController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> PostDoctor([FromBody] MedicamentPostRequestDto medicament)
+    public async Task<IActionResult> PostMedicament([FromBody] MedicamentPostRequestDto medicament)
     {
         try
         {
-            var entry = await this.database.Medicaments.AddAsync
-            (
-                new()
-                {
-                    Name = medicament.Name,
-                    Description = medicament.Description,
-                    Type = medicament.Type,
-                    PrescribedMedicine = []
-                }
-            );
-
-            await entry.Context.SaveChangesAsync();
+            var entry = await this.service.InsertMedicament(medicament);
 
             return this.Ok(new { entry.Entity.IdMedicament });
         }
@@ -53,14 +39,11 @@ public class MedicamentController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteDoctor([FromRoute] int id)
+    public async Task<IActionResult> DeleteMedicament([FromRoute] int id)
     {
         try
         {
-            var entry = this.database.Entry(await this.database.Medicaments.Where(med => med.IdMedicament == id).SingleAsync());
-
-            this.database.Medicaments.Remove(entry.Entity);
-            await entry.Context.SaveChangesAsync();
+            await this.service.DeleteMedicamentById(id);
 
             return this.NoContent();
         }

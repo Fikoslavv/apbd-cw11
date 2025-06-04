@@ -9,19 +9,16 @@ namespace apbd_cw11.Controllers;
 [Route("[controller]")]
 public class DoctorController : ControllerBase
 {
-    protected readonly ClinicDbContext database;
+    protected readonly DBService service;
 
-    public DoctorController(ClinicDbContext database)
-    {
-        this.database = database;
-    }
+    public DoctorController(DBService service) { this.service = service; }
 
     [HttpGet]
     public async Task<IActionResult> GetAllDoctors()
     {
         try
         {
-            var querry = this.database.Doctors.Select(doc => new DoctorDto(doc));
+            var querry = this.service.GetAllDoctors();
 
             if (await querry.AnyAsync()) return this.Ok(await querry.ToListAsync());
             else return this.NoContent();
@@ -34,17 +31,7 @@ public class DoctorController : ControllerBase
     {
         try
         {
-            var entry = await this.database.Doctors.AddAsync
-            (
-                new()
-                {
-                    FirstName = doctor.FirstName,
-                    LastName = doctor.LastName,
-                    Email = doctor.Email
-                }
-            );
-
-            await entry.Context.SaveChangesAsync();
+            var entry = await this.service.InsertDoctor(doctor);
 
             return this.Ok(new { entry.Entity.IdDoctor });
         }
@@ -56,10 +43,7 @@ public class DoctorController : ControllerBase
     {
         try
         {
-            var entry = this.database.Entry(await this.database.Doctors.Where(doc => doc.IdDoctor == id).SingleAsync());
-
-            this.database.Doctors.Remove(entry.Entity);
-            await entry.Context.SaveChangesAsync();
+            await this.service.DeleteDoctorById(id);
 
             return this.NoContent();
         }
